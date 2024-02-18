@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js Draw Lines with GUI</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+</head>
+<body>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        let layers = [];
+        let activeLayerIndex = null;
+
+        const gui = new dat.GUI();
+        const layerControls = [];
+ 
+        function addLayer() {
+            const layer = {
+                points: [],
+                color: new THREE.Color(Math.random() * 0xffffff),
+                folder: null,
+                active: true
+            };
+            layers.push(layer);
+            const layerFolder = gui.addFolder(`Layer ${layers.length}`);
+            layer.folder = layerFolder;
+            layerFolder.domElement.addEventListener('click', () => {
+                toggleLayerActive(layer);
+            });
+            layerControls.push(layerFolder);
+            toggleLayerActive(layer);
+        }
+
+        // Function to redraw all layers
+        function redrawLayers() {
+            scene.children = [];
+            layers.forEach(layer => {
+                if (layer.active) {
+                    drawLine(layer);
+                }
+            });
+        }
+        
+        // Function to draw a line for a layer
+        function drawLine(layer) {
+            const geometry = new THREE.BufferGeometry().setFromPoints(layer.points);
+            const material = new THREE.LineBasicMaterial({ color: layer.color });
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+        }
+
+       
+ 
+        function toggleLayerActive(layer) {
+            const layerIndex = layers.indexOf(layer);
+ 
+            if (layerIndex === activeLayerIndex) {
+                layer.active = false;
+                redrawLayers();
+                console.log("Layer deactivated!");
+                activeLayerIndex = null;
+            } else {
+          
+                layer.active = true;
+                redrawLinesForLayer(layer);
+                console.log("Layer activated!");
+                activeLayerIndex = layerIndex;
+ 
+ 
+                layers.forEach((l, index) => {
+                    if (layerControls[index]) {
+                        const pointerEvents = l.active ? 'auto' : 'none';
+                        layerControls[index].__controllers.forEach(controller => {
+                            controller.domElement.style.pointerEvents = pointerEvents;
+                        });
+                    } else {
+                        console.log("Layer controls not found for index:", index);
+                    }
+                });
+            }
+        }
+
+
+ 
+        function redrawLinesForLayer(layer) {
+            const layerIndex = layers.indexOf(layer);
+            scene.children.forEach(object => {
+                if (object.userData && object.userData.layerIndex === layerIndex) {
+                    scene.remove(object);
+                }
+            });
+            drawLine(layer);
+        }
+
+       
+        // Function to delete the last active layer
+        function deleteLastActiveLayer() {
+            if (layers.length>1){
+                if (activeLayerIndex !== null) {
+                    const deletedLayer = layers.splice(activeLayerIndex, 1)[0];
+                    gui.removeFolder(deletedLayer.folder);
+                    layerControls.splice(activeLayerIndex, 1);
+                    if (activeLayerIndex > 0) {
+                        activeLayerIndex--; // Set activeLayerIndex to previous layer
+                    } else if (layers.length > 0) {
+                        activeLayerIndex = 0; // Set activeLayerIndex to first layer if it's the last one
+                    } else {
+                        activeLayerIndex = null; // Set activeLayerIndex to null if there are no layers left
+                    }
+                    redrawLayers();
+                }
+            }
+        }
+
+
+ 
+        addLayer();
+ 
+
+        // Add controls for adding new layers and deleting the last active layer
+        const controls = {
+            'Add Layer': addLayer,
+            'Delete Layer': deleteLastActiveLayer
+        };
+        gui.add(controls, 'Add Layer');
+        gui.add(controls, 'Delete Layer');
+
+        // Set camera position
+        camera.position.z = 5;
+
+        // Function to handle mouse click
+        function onMouseClick(event) {
+            if (activeLayerIndex !== null && layers[activeLayerIndex].active) {
+                const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                const vector = new THREE.Vector3(mouseX, mouseY, 0.5);
+                vector.unproject(camera);
+
+                const dir = vector.sub(camera.position).normalize();
+                const distance = -camera.position.z / dir.z;
+                const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+
+                layers[activeLayerIndex].points.push(pos);
+                redrawLayers();
+            }
+        }
+
+        // Add event listener for mouse click
+        renderer.domElement.addEventListener('click', onMouseClick, false);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
