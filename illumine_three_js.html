@@ -6,6 +6,20 @@
     <style>
         body { margin: 0; }
         canvas { display: block; }
+        .pencil-button {
+            background-color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M16.66 5.66l1.27 1.27-10 10-6.36 1.91 1.91-6.36 10-10zM20.71 3.29c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 4.12 4.12 1.83-1.83c.39-.39.39-1.02 0-1.41l-3.71-3.71z" stroke="currentColor"></path></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 60%;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            height: 20px;
+            width:30px;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
@@ -20,10 +34,11 @@
 
         let layers = [];
         let activeLayerIndex = null;
+        let drawingEnabled = false;
 
         const gui = new dat.GUI();
         const layerControls = [];
- 
+
         function addLayer() {
             const layer = {
                 points: [],
@@ -50,7 +65,7 @@
                 }
             });
         }
-        
+
         // Function to draw a line for a layer
         function drawLine(layer) {
             const geometry = new THREE.BufferGeometry().setFromPoints(layer.points);
@@ -59,24 +74,20 @@
             scene.add(line);
         }
 
-       
- 
         function toggleLayerActive(layer) {
             const layerIndex = layers.indexOf(layer);
- 
+
             if (layerIndex === activeLayerIndex) {
                 layer.active = false;
                 redrawLayers();
                 console.log("Layer deactivated!");
                 activeLayerIndex = null;
             } else {
-          
                 layer.active = true;
                 redrawLinesForLayer(layer);
                 console.log("Layer activated!");
                 activeLayerIndex = layerIndex;
- 
- 
+
                 layers.forEach((l, index) => {
                     if (layerControls[index]) {
                         const pointerEvents = l.active ? 'auto' : 'none';
@@ -91,7 +102,6 @@
         }
 
 
- 
         function redrawLinesForLayer(layer) {
             const layerIndex = layers.indexOf(layer);
             scene.children.forEach(object => {
@@ -102,10 +112,10 @@
             drawLine(layer);
         }
 
-       
+
         // Function to delete the last active layer
         function deleteLastActiveLayer() {
-            if (layers.length>1){
+            if (layers.length > 1) {
                 if (activeLayerIndex !== null) {
                     const deletedLayer = layers.splice(activeLayerIndex, 1)[0];
                     gui.removeFolder(deletedLayer.folder);
@@ -123,17 +133,15 @@
         }
 
 
- 
-        
- 
-
         // Add controls for adding new layers and deleting the last active layer
         const controls = {
             'Add Layer': addLayer,
-            'Delete Layer': deleteLastActiveLayer
+            'Delete Layer': deleteLastActiveLayer,
+            'Pencil': function() { drawingEnabled = !drawingEnabled; }
         };
         gui.add(controls, 'Add Layer');
         gui.add(controls, 'Delete Layer');
+        gui.add(controls, 'Pencil').name('<button class="pencil-button"></button>');
 
         addLayer();
         // Set camera position
@@ -141,7 +149,7 @@
 
         // Function to handle mouse click
         function onMouseClick(event) {
-            if (activeLayerIndex !== null && layers[activeLayerIndex].active) {
+            if (drawingEnabled && activeLayerIndex !== null && layers[activeLayerIndex].active) {
                 const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
                 const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -169,3 +177,4 @@
     </script>
 </body>
 </html>
+
