@@ -124,7 +124,7 @@
 
 
  
-        addLayer();
+        
  
 
         // Add controls for adding new layers and deleting the last active layer
@@ -135,6 +135,7 @@
         gui.add(controls, 'Add Layer');
         gui.add(controls, 'Delete Layer');
 
+        addLayer();
         // Set camera position
         camera.position.z = 5;
 
