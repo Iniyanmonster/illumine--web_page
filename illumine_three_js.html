@@ -18,7 +18,10 @@
             margin-bottom: 10px;
             border-radius: 5px;
             height: 20px;
-            width:30px;
+            width: 30px;
+        }
+        .pencil-cursor {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M16.66 5.66l1.27 1.27-10 10-6.36 1.91 1.91-6.36 10-10zM20.71 3.29c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 4.12 4.12 1.83-1.83c.39-.39.39-1.02 0-1.41l-3.71-3.71z" stroke="white"></path></svg>'), auto;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -82,11 +85,13 @@
                 redrawLayers();
                 console.log("Layer deactivated!");
                 activeLayerIndex = null;
+                document.body.classList.remove('pencil-cursor');
             } else {
                 layer.active = true;
                 redrawLinesForLayer(layer);
                 console.log("Layer activated!");
                 activeLayerIndex = layerIndex;
+                document.body.classList.add('pencil-cursor');
 
                 layers.forEach((l, index) => {
                     if (layerControls[index]) {
@@ -137,7 +142,7 @@
         const controls = {
             'Add Layer': addLayer,
             'Delete Layer': deleteLastActiveLayer,
-            'Pencil': function() { drawingEnabled = !drawingEnabled; }
+            'Pencil': function() { drawingEnabled = !drawingEnabled; togglePencilCursor(); }
         };
         gui.add(controls, 'Add Layer');
         gui.add(controls, 'Delete Layer');
@@ -167,6 +172,14 @@
 
         // Add event listener for mouse click
         renderer.domElement.addEventListener('click', onMouseClick, false);
+ 
+        function togglePencilCursor() {
+            if (drawingEnabled) {
+                document.body.classList.add('pencil-cursor');
+            } else {
+                document.body.classList.remove('pencil-cursor');
+            }
+        }
 
         // Animation loop
         function animate() {
@@ -177,4 +190,3 @@
     </script>
 </body>
 </html>
-
