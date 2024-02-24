@@ -85,13 +85,13 @@
                 redrawLayers();
                 console.log("Layer deactivated!");
                 activeLayerIndex = null;
-                document.body.classList.remove('pencil-cursor');
+                
             } else {
                 layer.active = true;
                 redrawLinesForLayer(layer);
                 console.log("Layer activated!");
                 activeLayerIndex = layerIndex;
-                document.body.classList.add('pencil-cursor');
+       
 
                 layers.forEach((l, index) => {
                     if (layerControls[index]) {
